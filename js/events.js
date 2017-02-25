@@ -1,4 +1,4 @@
-chrome.browserAction.onClicked.addListener(function() { 
+chrome.browserAction.onClicked.addListener(() => { 
 
   if (!window.chrome)
     return;
@@ -12,7 +12,7 @@ chrome.browserAction.onClicked.addListener(function() {
 
       var videoIds = [];
 
-      tabs.forEach(function(tab) {
+      tabs.forEach((tab) => {
 
         var videoid = tab.url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
 
@@ -26,7 +26,7 @@ chrome.browserAction.onClicked.addListener(function() {
         }
       });
 
-      if(videoIds.length == 0)
+      if(videoIds.length <= 1)
         return;
 
       var url = 'http://www.youtube.com/watch_videos?video_ids=' + videoIds.join(',');
