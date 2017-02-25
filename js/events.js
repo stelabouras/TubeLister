@@ -11,6 +11,7 @@ chrome.browserAction.onClicked.addListener(() => {
         return;
 
       var videoIds = [];
+      var tabIdsToClose = [];
 
       tabs.forEach((tab) => {
 
@@ -22,12 +23,14 @@ chrome.browserAction.onClicked.addListener(() => {
         if(videoid.length > 1 && !tab.url.includes('list=')) {
 
           videoIds.push(videoid[1]);
-          chrome.tabs.remove(tab.id);
+          tabIdsToClose.push(tab.id);
         }
       });
 
       if(videoIds.length <= 1)
         return;
+
+      tabIdsToClose.forEach((tabId) => { chrome.tabs.remove(tabId); });
 
       var url = 'http://www.youtube.com/watch_videos?video_ids=' + videoIds.join(',');
 
