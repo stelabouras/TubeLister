@@ -15,16 +15,38 @@ chrome.browserAction.onClicked.addListener(() => {
 
       tabs.forEach((tab) => {
 
-        var videoid = tab.url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
-
-        if(videoid == null)
+        // Exclude any YouTube videos that 
+        // are already part of a playlist
+        if(tab.url.includes('list='))
           return;
 
-        if(videoid.length > 1 && !tab.url.includes('list=')) {
+        var urlParts = tab.url.replace(/(>|<)/gi,'').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/|\&|\#)/);
 
-          videoIds.push(videoid[1]);
-          tabIdsToClose.push(tab.id);
-        }
+        if(urlParts == null)
+          return;
+
+        if(urlParts.length < 3)
+          return;
+
+        // Check if we are on the YouTube domain
+        var isYoutubeDomain = false;
+
+        if(urlParts[0].includes('youtube.com') || urlParts[0].includes('youtu.be'))
+          isYoutubeDomain = true;
+        else if(urlParts[1].includes('youtube.com') || urlParts[1].includes('youtu.be'))
+          isYoutubeDomain = true;
+
+        if(!isYoutubeDomain)
+          return;
+
+        var videoId = urlParts[2];
+
+        // Last sanity check
+        if(!videoId.match(/^[A-Za-z0-9_-]{11}$/))
+          return;
+
+        videoIds.push(videoId);
+        tabIdsToClose.push(tab.id);
       });
 
       if(videoIds.length <= 1)
