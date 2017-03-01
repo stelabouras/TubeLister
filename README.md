@@ -4,7 +4,9 @@
 
 TubeLister collects all your open YouTube video tabs into one playlist tab to save memory and hassle!
 
-The extension ignores any YouTube videos that might be part of an existing playlist.
+The extension also extracts videos from existing Untitled playlists (that may have been generated before with the extension) and add them to the list.
+
+It also does not add duplicate videos and adds the focused Youtube video as first on the list.
 
 ## Install the Chrome extension
 
