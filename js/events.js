@@ -3,6 +3,7 @@ chrome.browserAction.onClicked.addListener(() => {
   chrome.windows.getCurrent((window) => {
 
     var currentWindowId = window.id;
+    var maxPlaylistVideos = 50;
 
     chrome.tabs.query(
       {}, 
@@ -16,6 +17,7 @@ chrome.browserAction.onClicked.addListener(() => {
         var fulfilledPlaylists = [];
         var activeTabVideoId = null;
 
+        var isYoutubeVideoId = (videoId) => { return videoId.match(/^[A-Za-z0-9_-]{11}$/); }
         var compressTabs = () => {
 
           if(fulfilledPlaylists.length > 0)
@@ -72,17 +74,35 @@ chrome.browserAction.onClicked.addListener(() => {
 
               if(result.length == 1 && result[0].length > 0) {
 
-                tabIdsToClose.push(tab.id);
+                var playlistVideos = result[0];
 
-                result[0].forEach((videoId) => {
+                var videosToAdd = [];
 
-                  // Last sanity check
-                  if(!videoId.match(/^[A-Za-z0-9_-]{11}$/))
+                // Check for duplicates
+                playlistVideos.forEach((videoId) => {
+
+                  if(!isYoutubeVideoId(videoId))
                     return;
 
                   if(videoIds.indexOf(videoId) == -1)
-                    videoIds.push(videoId);
+                    videosToAdd.push(videoId);
                 });
+
+                if(videosToAdd.length == maxPlaylistVideos) {
+
+                  compressTabs();
+                  return;
+                }
+
+                if(videosToAdd.length + videoIds.length > maxPlaylistVideos) {
+
+                  compressTabs();
+                  return;
+                }
+
+                tabIdsToClose.push(tab.id);
+
+                videosToAdd.forEach((videoId) => { videoIds.push(videoId); });
               }
         
               compressTabs();
@@ -93,13 +113,19 @@ chrome.browserAction.onClicked.addListener(() => {
 
           var videoId = urlParts[2];
 
-          // Last sanity check
-          if(!videoId.match(/^[A-Za-z0-9_-]{11}$/))
+          if(!isYoutubeVideoId(videoId))
+            return;
+
+          // Check for duplicates
+          if(videoIds.indexOf(videoId) != -1)
+            return;
+
+          if(videoIds.length + 1 > maxPlaylistVideos)
             return;
 
           if(tab.active && tab.windowId == currentWindowId)
             activeTabVideoId = videoId;
-          else if(videoIds.indexOf(videoId) == -1)
+          else
             videoIds.push(videoId);
 
           tabIdsToClose.push(tab.id);
