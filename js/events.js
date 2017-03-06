@@ -40,7 +40,7 @@ chrome.browserAction.onClicked.addListener(() => {
 
         tabIdsToClose.forEach((tabId) => {  chrome.tabs.remove(tabId); });
 
-        var url = 'https://www.youtube.com/watch_videos?video_ids=' + videoIds.join(',');
+        var url = 'https://www.youtube.com/watch_videos?title=TubeLister&video_ids=' + videoIds.join(',');
 
         chrome.tabs.create({ 'url' : url });     
       };

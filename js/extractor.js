@@ -12,12 +12,12 @@ if(!window.TubeListerExtractor) {
             
             if(playlistElement) {
 
-                if(
-                    // Make sure we are only extracting videos from
-                    // the 'Untitled list' playlists
-                    playlistElement.dataset.listTitle.localeCompare('Untitled list') == 0 &&
-                    // Make sure the playlist is not shared
-                    playlistElement.dataset.shareable.localeCompare('False') == 0 ) {
+                // Make sure we are only extracting videos from
+                // the 'Untitled list' or 'TubeLister' playlists                    
+                var playlistTitle = playlistElement.dataset.listTitle.toLowerCase();
+
+                if( playlistTitle.localeCompare('untitled list') == 0 || 
+                    playlistTitle.localeCompare('tubelister') == 0 ) {
 
                     var currentlyPlaying = null;
 
