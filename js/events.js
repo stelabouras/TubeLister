@@ -24,7 +24,11 @@ chrome.browserAction.onClicked.addListener(() => {
         if(fulfilledTabs.length > 0)
           return;
 
+        var hasActiveYoutubeTab = false;
+
         if(activeTabVideoIds.length > 0) {
+
+          hasActiveYoutubeTab = true;
 
           for(var i = activeTabVideoIds.length - 1; i >= 0; i--) {
 
@@ -42,7 +46,10 @@ chrome.browserAction.onClicked.addListener(() => {
 
         var url = 'https://www.youtube.com/watch_videos?title=TubeLister&video_ids=' + videoIds.join(',');
 
-        chrome.tabs.create({ 'url' : url });     
+        chrome.tabs.create({ 
+          'url' : url,
+          'active' : hasActiveYoutubeTab
+        });     
       };
     
       tabs.forEach((tab) => {
