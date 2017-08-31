@@ -47,7 +47,7 @@ if(!window.TubeListerExtractor) {
                         videoIds.unshift(currentlyPlaying);
                 }
             }
-            else if(!newPlaylistElement.hidden) {
+            else if(newPlaylistElement && !newPlaylistElement.hidden) {
 
                 var playlistTitle = document.querySelector('ytd-playlist-panel-renderer h3.ytd-playlist-panel-renderer yt-formatted-string').innerText.toLowerCase();
 
