@@ -72,8 +72,8 @@ if(!window.TubeListerExtractor) {
             }
             else if(document.querySelector('meta[itemprop="videoId"]'))
                 videoIds.push(document.querySelector('meta[itemprop="videoId"]').content);
-            else if(document.querySelector('a.ytp-title-link'))
-                videoIds.push(this.extractVideoIdFromURL(document.querySelector('a.ytp-title-link').href));
+            else
+                videoIds.push(this.extractVideoIdFromURL(window.location.href));
 
             return videoIds;
         }

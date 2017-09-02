@@ -27,5 +27,5 @@
   "manifest_version": 2,
   "name": "TubeLister",
   "permissions": [ "tabs", "http://*/*", "https://*/*" ],
-  "version": "2.0"
+  "version": "2.1"
 }
