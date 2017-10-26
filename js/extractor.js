@@ -15,7 +15,7 @@ if(!window.TubeListerExtractor) {
             return video_id;
         },
 
-        extract : function() {
+        extract : function() { 
 
             var playlistElement = document.querySelector('[data-list-title]');
             var newPlaylistElement = document.querySelector('ytd-playlist-panel-renderer');
@@ -47,34 +47,13 @@ if(!window.TubeListerExtractor) {
                         videoIds.unshift(currentlyPlaying);
                 }
             }
-            else if(newPlaylistElement && !newPlaylistElement.hidden) {
-
-                var playlistTitle = document.querySelector('ytd-playlist-panel-renderer h3.ytd-playlist-panel-renderer yt-formatted-string').innerText.toLowerCase();
-
-                if( playlistTitle.localeCompare('untitled list') == 0 || 
-                    playlistTitle.localeCompare('tubelister') == 0 ) {
-
-                    var currentlyPlaying = null;
-
-                    document.querySelectorAll('ytd-playlist-panel-renderer ytd-playlist-panel-video-renderer').forEach((element) => { 
-
-                        if(element.selected)
-                            currentlyPlaying = element.dataset.videoId;
-                        else
-                            videoIds.push(this.extractVideoIdFromURL(element.querySelector('a').href));
-                    });
-
-                    // Get the currently playing video first
-                    // on the list
-                    if(currentlyPlaying)
-                        videoIds.unshift(currentlyPlaying);
-                }
-            }
+            else if(typeof document.body.dataset.videos != 'undefined')
+                videoIds = JSON.parse(document.body.dataset.videos);
             else if(document.querySelector('meta[itemprop="videoId"]'))
                 videoIds.push(document.querySelector('meta[itemprop="videoId"]').content);
             else
                 videoIds.push(this.extractVideoIdFromURL(window.location.href));
-
+console.log(videoIds);
             return videoIds;
         }
       };

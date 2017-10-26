@@ -119,6 +119,8 @@ chrome.browserAction.onClicked.addListener(() => {
             return;
           }
 
+          console.log('isActiveTab=', isActiveTab, 'videoIds=', videoIds);
+
           tabIdsToClose.push(tab.id);
 
           videosToAdd.forEach((videoId) => { 
