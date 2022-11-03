@@ -11,3 +11,7 @@ It also does not add duplicate videos and adds the focused Youtube video as firs
 ## Install the Chrome extension
 
 Do you want to try it on your Chrome browser? [Give it a spin](https://chrome.google.com/webstore/detail/lekljbhoijkojpbdgdbbmonjddaaoibh/).
+
+## Known issues
+
+Sometimes after TubeLister presents the tab with all the collected videos, the playlist is not visible. This is a YouTube issue that can be resolved by refreshing the page.

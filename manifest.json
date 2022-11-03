@@ -1,10 +1,9 @@
 {
    "author": "Stelios Petrakis",
    "background": {
-      "persistent": true,
-      "scripts": [ "js/events.js" ]
+      "service_worker": "js/events.js"
    },
-   "browser_action": {
+   "action": {
       "default_icon": {
          "19": "icons/icon-19.png",
          "38": "icons/icon-76.png"
@@ -19,14 +18,15 @@
     }
   },
   "description": "Generate a YouTube playlist from your opened tabs.",
-  "homepage_url": "http://stelabouras.com",
+  "homepage_url": "https://github.com/stelabouras/TubeLister",
   "icons": {
     "16": "icons/icon-16.png",
     "256": "icons/icon-256.png"
   },
-  "web_accessible_resources": [
-    "js/content.js"
-  ],
+  "web_accessible_resources": [{ 
+    "resources": ["js/content.js"],
+    "matches": ["*://*.youtube.com/*"]
+  }],
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
@@ -34,8 +34,11 @@
       "run_at": "document_end"
     }
   ],
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "TubeLister",
-  "permissions": [ "tabs", "http://*/*", "https://*/*" ],
-  "version": "2.3"
+  "permissions": [ "tabs", "scripting" ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
+  ],
+  "version": "3.0"
 }

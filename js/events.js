@@ -1,144 +1,236 @@
-chrome.browserAction.onClicked.addListener(() => { 
+chrome.action.onClicked.addListener((tab) => { 
+	chrome.windows.getCurrent((window) => {
+		var maxPlaylistVideos = 50;
+		var currentWindowId   = window.id;
 
-  chrome.windows.getCurrent((window) => {
+		chrome.tabs.query(
+			{}, 
+			(tabs) => {
+			if (!tabs)
+				return;
 
-    var maxPlaylistVideos = 50;
-    var currentWindowId   = window.id;
+			var videos = [];
+			var tabIdsToClose = [];
+			var activeTabVideos = [];
 
-    chrome.tabs.query(
-      {}, 
-      (tabs) => {
+			var isYoutubeVideoId = (videoId) => { 
+				return videoId.match(/^[A-Za-z0-9_-]{11}$/);
+			};
 
-      if(!tabs)
-        return;
+			var extract = (youtube_url) => {
+				var videoIdFromURL = (url) => {
+					var video_id = url.split('v=')[1];
+					var ampersandPosition = video_id.indexOf('&');
 
-      var videoIds = [];
-      var tabIdsToClose = [];
-      var fulfilledTabs = [];
-      var activeTabVideoIds = [];
+					if (ampersandPosition != -1)
+						video_id = video_id.substring(0, ampersandPosition);
 
-      var isYoutubeVideoId = (videoId) => { return videoId.match(/^[A-Za-z0-9_-]{11}$/); };
+					return video_id;
+				};
 
-      var compressTabs = () => {
+				let channelName = document.querySelector('span[itemprop=author] link[itemprop=name]') ? document.querySelector('span[itemprop=author] link[itemprop=name]').getAttribute('content') : '';
+				var playlistElement = document.querySelector('#content ytd-playlist-panel-renderer#playlist');
+				var videos = [];
 
-        if(fulfilledTabs.length > 0)
-          return;
+				if (typeof document.body.dataset.videos != 'undefined') {
+					videos = JSON.parse(document.body.dataset.videos);
+				}
+				else if (playlistElement 
+						&& playlistElement.querySelector('#header-description h3 .title').innerText != null
+						&& (playlistElement.querySelector('#header-description h3 .title').innerText.toLowerCase().localeCompare('untitled list') == 0
+							|| playlistElement.querySelector('#header-description h3 .title').innerText.toLowerCase().localeCompare('tubelister') == 0)) {
+					var currentlyPlaying = null;
 
-        var hasActiveYoutubeTab = false;
+					playlistElement.querySelectorAll('#items ytd-playlist-panel-video-renderer').forEach(function(element) { 
+						let videoId = videoIdFromURL(element.querySelector('a#wc-endpoint').href);
+						let channelName = element.querySelector('span#byline').innerText;
 
-        if(activeTabVideoIds.length > 0) {
+						let video = {
+							'videoId': videoId,
+							'channelName': channelName,
+							'type': 2
+						};
 
-          hasActiveYoutubeTab = true;
+						if (element.selected)
+							currentlyPlaying = video;
+						else
+							videos.push(video);
+					});
 
-          for(var i = activeTabVideoIds.length - 1; i >= 0; i--) {
+					// Get the currently playing video first
+					// on the list
+					if (currentlyPlaying)
+						videos.unshift(currentlyPlaying);
+				}
+				else if (document.querySelector('meta[itemprop="videoId"]')) {
+					videos.push({
+						'videoId': document.querySelector('meta[itemprop="videoId"]').content,
+						'channelName': channelName,
+						'type': 3
+					});
+				}
+				else {
+					videos.push({
+						'videoId': videoIdFromURL(youtube_url),
+						'channelName': channelName,
+						'type': 4
+					});
+				}
 
-            var videoId = activeTabVideoIds[i];
+				return videos;
+			};
 
-            if(videoIds.indexOf(videoId) == -1)
-              videoIds.unshift(videoId);
-          }
-        }
+			var compressTabs = () => {
+				var hasActiveYoutubeTab = false;
 
-        if(tabIdsToClose.length <= 1)
-          return;
+				if (activeTabVideos.length > 0) {
+					hasActiveYoutubeTab = true;
 
-        tabIdsToClose.forEach((tabId) => {  chrome.tabs.remove(tabId); });
+					for (var i = activeTabVideos.length - 1; i >= 0; i--) {
+						var video = activeTabVideos[i];
 
-        var url = 'https://www.youtube.com/watch_videos?title=TubeLister&video_ids=' + videoIds.join(',');
+						if (videos.indexOf(video) == -1)
+							videos.unshift(video);
+					}
+				}
 
-        chrome.tabs.create({ 
-          'url' : url,
-          'active' : hasActiveYoutubeTab
-        });     
-      };
-    
-      tabs.forEach((tab) => {
+				if (tabIdsToClose.length <= 1)
+					return;
 
-        if(tab.url.startsWith('view-source:'))
-          return;
+				if (videos.length < 2)
+					return;
 
-        var urlParts = tab.url.replace(/(>|<)/gi,'').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/|\&|\#)/);
+				var playlistName = videos[0].channelName;
 
-        if(urlParts == null)
-          return;
+				for (var i = 1; i < videos.length; i++) {
+					let video = videos[i];
 
-        if(urlParts.length < 3)
-          return;
+					if (video.channelName.localeCompare(playlistName) == 0)
+						continue;
+					else {
+						playlistName = 'TubeLister';
+						break;
+					}
+				}
 
-        // Check if we are on the YouTube domain
-        var isYoutubeDomain = false;
+				console.log('Compressing ' + videos.length + ' videos into the ' + playlistName + ' playlist...');
 
-        if(urlParts[0].includes('youtube.com') || urlParts[0].includes('youtu.be'))
-          isYoutubeDomain = true;
-        else if(urlParts[1].includes('youtube.com') || urlParts[1].includes('youtu.be'))
-          isYoutubeDomain = true;
+				let url = 'https://www.youtube.com/watch_videos?title=' + playlistName + '&video_ids=' + videos.map(video => video.videoId).join(',');
 
-        if(!isYoutubeDomain)
-          return;
+				tabIdsToClose.forEach((tabId) => {  chrome.tabs.remove(tabId); });
 
-        var isActiveTab = (tab.active && tab.windowId == currentWindowId);
+				chrome.tabs.create({
+					'url' : url,
+					'active' : hasActiveYoutubeTab
+				});
+			};
 
-        fulfilledTabs.push(tab.id);
+			var extractVideosFromInjectionResults = (results) => {
+				var videos = [];
 
-        chrome.tabs.executeScript(tab.id, {
-          file: "js/extractor.js",
-          runAt: "document_end"
-        }, (result) => {
+				for (var i = 0; i < results.length; i++) {
+					let result = results[i];
 
-          fulfilledTabs.splice(fulfilledTabs.indexOf(tab.id), 1);
+					if (result.result == null || result.result.length == 0)
+						continue;
 
-          if(result.length == 0)
-            return;
+					videos = result.result;
+					break;
+				}
 
-          if(result[0].length == 0)
-            return;
+				return videos;
+			};
 
-          var playlistVideos = result[0];
+			var advanceProcessTabsAndCompress = () => {
+				processedTabCount += 1;
 
-          var videosToAdd = [];
+				if (processedTabCount < totalTabCount)
+					return;
 
-          // Check for duplicates
-          playlistVideos.forEach((videoId) => {
+				compressTabs();
+			};
 
-            if(!isYoutubeVideoId(videoId))
-              return;
+			var totalTabCount = tabs.length;
+			var processedTabCount = 0;
 
-            if(videoIds.indexOf(videoId) == -1)
-              videosToAdd.push(videoId);
-          });
+			tabs.forEach((tab) => {
+				if (tab.url.startsWith('view-source:')){
+					advanceProcessTabsAndCompress();
+					return;
+				}
 
-          if(videosToAdd.length == maxPlaylistVideos) {
+				var urlParts = tab.url.replace(/(>|<)/gi,'').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/|\&|\#)/);
 
-            compressTabs();
-            return;
-          }
+				if (urlParts == null) {
+					advanceProcessTabsAndCompress();
+					return;
+				}
 
-          if(videosToAdd.length + videoIds.length > maxPlaylistVideos) {
+				if (urlParts.length < 3) {
+					advanceProcessTabsAndCompress();
+					return;
+				}
 
-            compressTabs();
-            return;
-          }
+				// Check if we are on the YouTube domain
+				var isYoutubeDomain = false;
 
-          console.log('isActiveTab=', isActiveTab, 'videoIds=', videoIds);
+				if (urlParts[0].includes('youtube.com') || urlParts[0].includes('youtu.be'))
+					isYoutubeDomain = true;
+				else if (urlParts[1].includes('youtube.com') || urlParts[1].includes('youtu.be'))
+					isYoutubeDomain = true;
 
-          tabIdsToClose.push(tab.id);
+				if (!isYoutubeDomain) {
+					advanceProcessTabsAndCompress();
+					return;
+				}
 
-          videosToAdd.forEach((videoId) => { 
+				var isActiveTab = (tab.active && tab.windowId == currentWindowId);
 
-            if(isActiveTab)
-              activeTabVideoIds.push(videoId);
-            else
-              videoIds.push(videoId); 
-          });
-    
-          compressTabs();
+				chrome.scripting.executeScript({
+					target: {tabId: tab.id, allFrames: true},
+					func: extract,
+					args: [tab.url],
+				}, (injectionResults) => {
+					let extractedVideos = extractVideosFromInjectionResults(injectionResults);
 
-        });
+					if (extractedVideos.length == 0) {
+						advanceProcessTabsAndCompress();
+						return;
+					}
 
-      });
-         
-    });
+					var videosToAdd = [];
 
-  });
+					// Check for duplicates
+					extractedVideos.forEach((video) => {
+						if (!isYoutubeVideoId(video.videoId))
+							return;
 
+						if (videos.indexOf(video) == -1)
+							videosToAdd.push(video);
+					});
+
+					if (videosToAdd.length == maxPlaylistVideos) {
+						advanceProcessTabsAndCompress();
+						return;
+					}
+
+					if (videosToAdd.length + videos.length > maxPlaylistVideos) {
+						advanceProcessTabsAndCompress();
+						return;
+					}
+
+					tabIdsToClose.push(tab.id);
+
+					videosToAdd.forEach((video) => { 
+						if (isActiveTab)
+							activeTabVideos.push(video);
+						else
+							videos.push(video); 
+					});
+
+					advanceProcessTabsAndCompress();
+				});
+			});
+		});
+	});
 });
